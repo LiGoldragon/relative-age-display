@@ -1,6 +1,6 @@
 [package]
 name         = "relative-age-display"
-version      = "0.1.0"
+version      = "0.2.0"
 edition      = "2024"
 rust-version = "1.85"
 license      = "MIT OR Apache-2.0"
@@ -11,6 +11,9 @@ publish      = false
 [lib]
 name = "relative_age_display"
 path = "src/lib.rs"
+
+[dependencies]
+nota = { git = "https://github.com/LiGoldragon/nota.git", rev = "89dc3c85a9ff96d4e4d53accfd867df672cae5a8" }
 
 [lints.rust]
 unsafe_code = "forbid"

@@ -2,7 +2,8 @@
 
 use std::time::Duration;
 
-use relative_age_display::RelativeAge;
+use nota::{NotaEncode, NotaSource};
+use relative_age_display::{HumanReadableTime, RelativeAge};
 
 fn rendered_from_seconds(seconds: f64) -> String {
     RelativeAge::from_duration(Duration::from_secs_f64(seconds)).to_string()
@@ -120,4 +121,35 @@ fn elapsed_between_measures_forward_spans() {
         RelativeAge::elapsed_between(earlier, later).to_string(),
         "42.00 seconds"
     );
+}
+
+#[test]
+fn human_readable_time_encodes_whole_and_fractional_units_as_typed_nota() {
+    let minutes =
+        RelativeAge::from_duration(Duration::from_secs(10 * 60)).into_human_readable_time();
+    let days = RelativeAge::from_duration(Duration::from_secs_f64(3.2 * 86_400.0))
+        .into_human_readable_time();
+
+    assert_eq!(minutes.to_nota(), "Minutes.10");
+    assert_eq!(days.to_nota(), "Days.(3.2)");
+    assert_eq!(
+        NotaSource::new("Minutes.10")
+            .parse::<HumanReadableTime>()
+            .expect("whole-unit typed NOTA decodes"),
+        minutes
+    );
+    assert_eq!(
+        NotaSource::new("Days.(3.2)")
+            .parse::<HumanReadableTime>()
+            .expect("fractional-unit typed NOTA decodes"),
+        days
+    );
+}
+
+#[test]
+fn human_readable_time_preserves_two_decimal_quantization() {
+    let days = RelativeAge::from_duration(Duration::from_secs_f64(3.428 * 86_400.0))
+        .into_human_readable_time();
+
+    assert_eq!(days.to_nota(), "Days.(3.43)");
 }
