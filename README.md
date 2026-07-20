@@ -29,6 +29,14 @@ unambiguous.
 consumers, using that same typed conversion. New coordination output should use
 `into_human_readable_time()` and encode the resulting value directly.
 
+## Presentation codec family
+
+This crate is an immutable Nota 0.9 presentation-family release. Its sole codec
+dependency is pinned to Nota 0.9 revision
+`89dc3c85a9ff96d4e4d53accfd867df672cae5a8`; it has no `nota-human` dependency
+and does not import legacy Nota 0.5 wire traits. Consumers must keep this
+human-presentation codec family separate from legacy coordination-wire values.
+
 ## The unit ladder
 
 The presentation climbs one ordered ladder of units. Each rung carries the
