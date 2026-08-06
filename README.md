@@ -3,11 +3,11 @@
 `relative-age-display` converts an elapsed span into a closed typed
 `HumanReadableTime` value. It is the shared duration-presentation layer for
 status surfaces: a consumer keeps the exact source duration separately, then
-encodes this projection as NOTA rather than flattening it into prose.
+encodes this projection as Dotos rather than flattening it into prose.
 
 ```rust
 use std::time::Duration;
-use nota::NotaEncode;
+use dotos::DotosEncode;
 use relative_age_display::RelativeAge;
 
 let minutes = RelativeAge::from_duration(Duration::from_secs(10 * 60))
@@ -15,18 +15,18 @@ let minutes = RelativeAge::from_duration(Duration::from_secs(10 * 60))
 let days = RelativeAge::from_duration(Duration::from_secs_f64(3.2 * 86_400.0))
     .into_human_readable_time();
 
-assert_eq!(minutes.to_nota(), "Minutes.10");
-assert_eq!(days.to_nota(), "Days.(3.2)");
+assert_eq!(minutes.to_dotos(), "Minutes.10");
+assert_eq!(days.to_dotos(), "Days.(3.2)");
 ```
 
 `HumanReadableTime` has closed `Seconds`, `Minutes`, `Hours`, `Days`, `Weeks`,
 `Months`, and `Years` variants. Its magnitude is deterministically quantized to
-two decimal places. Whole magnitudes are bare NOTA values; fractional
+two decimal places. Whole magnitudes are bare Dotos values; fractional
 magnitudes are parenthesized so an enclosing variant remains structurally
 unambiguous.
 
-`RelativeAge` still implements `Display` for compatibility with text-only
-consumers, using that same typed conversion. New coordination output should use
+`RelativeAge` implements `Display` for text-only consumers using that same
+typed conversion. Coordination output should use
 `into_human_readable_time()` and encode the resulting value directly.
 
 ## The unit ladder
@@ -48,7 +48,7 @@ no special cases, that cutoff is simply the seconds rung's upper bound.
 
 Months and years use the mean Gregorian calendar length (365.2425 days per
 year). The underlying `RelativeAge` conversion quantizes each magnitude to two
-decimal places, and the typed NOTA value preserves its unit.
+decimal places, and the typed Dotos value preserves its unit.
 
 ## Construction
 
@@ -58,4 +58,4 @@ decimal places, and the typed NOTA value preserves its unit.
 - `RelativeAge::elapsed_between(earlier, later)` — the span between two
   instants on one clock, saturating to zero when `later` precedes `earlier`.
 - `RelativeAge::into_human_readable_time()` — the structured unit-and-magnitude
-  projection for NOTA output.
+  projection for Dotos output.

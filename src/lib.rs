@@ -3,7 +3,7 @@
 //! A [`RelativeAge`] converts an elapsed time span into a closed
 //! [`HumanReadableTime`] value. The value retains the selected unit and its
 //! deterministic two-decimal magnitude, so consumers can encode the age as
-//! structured NOTA rather than flattening it into display text.
+//! structured Dotos rather than flattening it into display text.
 //!
 //! The unit ladder climbs from seconds through years. Seconds are shown only up
 //! to three minutes of elapsed time; past that the presentation promotes to
@@ -13,12 +13,12 @@
 
 use std::{fmt, time::Duration};
 
-use nota::{Block, Delimiter, NotaBlock, NotaDecode, NotaDecodeError, NotaEncode};
+use dotos::{Block, Delimiter, DotosBlock, DotosDecode, DotosDecodeError, DotosEncode};
 
 /// One two-decimal magnitude carried by a [`HumanReadableTime`] unit.
 ///
 /// The stored value is quantized through the same two-decimal formatting rule
-/// the prior text presentation used. Its NOTA form omits a fractional suffix
+/// the prior text presentation used. Its Dotos form omits a fractional suffix
 /// when the rounded value is whole (`10`) and parenthesizes a fractional
 /// literal (`(3.2)`) so an enclosing unit variant has one unambiguous payload.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -46,9 +46,9 @@ impl HumanReadableMagnitude {
         format!("{:.2}", self.0)
     }
 
-    /// The canonical numeric NOTA payload, parenthesized when fractional so an
+    /// The canonical numeric Dotos payload, parenthesized when fractional so an
     /// enclosing unit variant remains a two-level application.
-    fn nota_payload(self) -> String {
+    fn dotos_payload(self) -> String {
         let fixed = self.display_text();
         let numeric = fixed.trim_end_matches('0').trim_end_matches('.');
         if numeric.contains('.') {
@@ -59,9 +59,9 @@ impl HumanReadableMagnitude {
     }
 
     /// The scalar inside the optional fractional-parenthesis payload.
-    fn from_nota_payload(block: &Block) -> Result<&Block, NotaDecodeError> {
+    fn from_dotos_payload(block: &Block) -> Result<&Block, DotosDecodeError> {
         match block.as_delimited(Delimiter::Parenthesis) {
-            Some(_) => Ok(&NotaBlock::new(block).expect_children(
+            Some(_) => Ok(&DotosBlock::new(block).expect_children(
                 Delimiter::Parenthesis,
                 "HumanReadableMagnitude",
                 1,
@@ -71,17 +71,17 @@ impl HumanReadableMagnitude {
     }
 }
 
-impl NotaEncode for HumanReadableMagnitude {
-    fn to_nota(&self) -> String {
-        self.nota_payload()
+impl DotosEncode for HumanReadableMagnitude {
+    fn to_dotos(&self) -> String {
+        self.dotos_payload()
     }
 }
 
-impl NotaDecode for HumanReadableMagnitude {
-    fn from_nota_block(block: &Block) -> Result<Self, NotaDecodeError> {
-        let value = f64::from_nota_block(Self::from_nota_payload(block)?)?;
+impl DotosDecode for HumanReadableMagnitude {
+    fn from_dotos_block(block: &Block) -> Result<Self, DotosDecodeError> {
+        let value = f64::from_dotos_block(Self::from_dotos_payload(block)?)?;
         if !value.is_finite() || value.is_sign_negative() {
-            return Err(NotaDecodeError::InvalidValue {
+            return Err(DotosDecodeError::InvalidValue {
                 type_name: "HumanReadableMagnitude",
                 value: value.to_string(),
                 reason: "expected a finite non-negative magnitude".to_owned(),
@@ -94,9 +94,9 @@ impl NotaDecode for HumanReadableMagnitude {
 /// A closed elapsed-time presentation whose unit remains data.
 ///
 /// Each variant carries a [`HumanReadableMagnitude`] in the unit selected by
-/// the relative-age ladder. Its NOTA representation is positional and typed:
+/// the relative-age ladder. Its Dotos representation is positional and typed:
 /// `Minutes.10` and `Days.(3.2)` are values, not prose.
-#[derive(Debug, Clone, Copy, PartialEq, NotaDecode, NotaEncode)]
+#[derive(Debug, Clone, Copy, PartialEq, DotosDecode, DotosEncode)]
 pub enum HumanReadableTime {
     Seconds(HumanReadableMagnitude),
     Minutes(HumanReadableMagnitude),
@@ -108,7 +108,7 @@ pub enum HumanReadableTime {
 }
 
 impl HumanReadableTime {
-    /// Render the compatibility text projection without losing the typed
+    /// Render the text projection without losing the typed
     /// unit/magnitude representation used by coordination output.
     fn display_text(self) -> String {
         match self {
