@@ -1,8 +1,8 @@
 [package]
 name         = "relative-age-display"
-version      = "0.3.0"
+version      = "0.4.0"
 edition      = "2024"
-rust-version = "1.85"
+rust-version = "1.89"
 license      = "MIT OR Apache-2.0"
 repository   = "https://github.com/LiGoldragon/relative-age-display"
 description  = "Human-readable relative-age display: an elapsed span rendered as its single most-significant unit with two decimals."
@@ -13,7 +13,11 @@ name = "relative_age_display"
 path = "src/lib.rs"
 
 [dependencies]
-dotos = { git = "https://github.com/LiGoldragon/dotos.git", rev = "80c7b17f7ad3cf547d2624c6a243e5de5f85c9f3" }
+datomic = { git = "https://github.com/LiGoldragon/datomic", rev = "b670c72d0c2cb94ad1e39b372271f6569d91e214" }
+protos = { git = "https://github.com/LiGoldragon/protos", rev = "bfde3b878dd3de2991d7f605b59f57a13ef8f20b" }
+
+[dev-dependencies]
+ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "b922afba278d5e1430f0a52ce49898c3263e87bc" }
 
 [lints.rust]
 unsafe_code = "forbid"

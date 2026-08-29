@@ -1,61 +1,58 @@
 # relative-age-display
 
-`relative-age-display` converts an elapsed span into a closed typed
-`HumanReadableTime` value. It is the shared duration-presentation layer for
-status surfaces: a consumer keeps the exact source duration separately, then
-encodes this projection as Dotos rather than flattening it into prose.
+`relative-age-display` projects an elapsed span onto its single most-significant
+unit. The projection is a closed, typed Datomic value: text enters through
+`Text<T>`, the value embodies through `TextEdge`, and outbound data becomes a
+Protos `Portion` before it is textualized.
 
 ```rust
+use datomic::{Datomic, Text, TextEdge};
+use relative_age_display::{HumanReadableTime, RelativeAge};
 use std::time::Duration;
-use dotos::DotosEncode;
-use relative_age_display::RelativeAge;
 
 let minutes = RelativeAge::from_duration(Duration::from_secs(10 * 60))
     .into_human_readable_time();
-let days = RelativeAge::from_duration(Duration::from_secs_f64(3.2 * 86_400.0))
-    .into_human_readable_time();
+let text = minutes.textualize();
 
-assert_eq!(minutes.to_dotos(), "Minutes.10");
-assert_eq!(days.to_dotos(), "Days.(3.2)");
+assert_eq!(text.as_ref(), "Minutes.10.0");
+assert!(matches!(
+    Text::<HumanReadableTime>::from("Days.3.2").embody(),
+    Ok(HumanReadableTime::Days(_))
+));
 ```
 
 `HumanReadableTime` has closed `Seconds`, `Minutes`, `Hours`, `Days`, `Weeks`,
-`Months`, and `Years` variants. Its magnitude is deterministically quantized to
-two decimal places. Whole magnitudes are bare Dotos values; fractional
-magnitudes are parenthesized so an enclosing variant remains structurally
-unambiguous.
+`Months`, and `Years` variants. Each payload is a finite decimal, so text and
+Portion projection remain total for every value produced by `RelativeAge`.
+The source-owned `relative-age-display.ethos` map owns those declarations;
+`src/generated.rs` is its byte-exact `RustEmitter::datomic_library()` output.
 
-`RelativeAge` implements `Display` for text-only consumers using that same
-typed conversion. Coordination output should use
-`into_human_readable_time()` and encode the resulting value directly.
+`RelativeAge` implements `Display` for text-only views. Use
+`into_human_readable_time()` with the Datomic edge whenever the selected unit
+must remain data.
 
 ## The unit ladder
 
 The presentation climbs one ordered ladder of units. Each rung carries the
 span until the elapsed time reaches that rung's upper bound, then the next
-coarser unit takes over. Seconds are shown only up to three minutes; there are
-no special cases, that cutoff is simply the seconds rung's upper bound.
+coarser unit takes over. Seconds are shown only up to three minutes.
 
-| Unit    | Shown while elapsed time is below |
-|---------|-----------------------------------|
-| seconds | 3 minutes                         |
-| minutes | 90 minutes                        |
-| hours   | 36 hours                          |
-| days    | 14 days                           |
-| weeks   | 60 days                           |
-| months  | 24 months (2 years)               |
-| years   | open-ended                        |
+| Unit | Shown while elapsed time is below |
+| --- | --- |
+| seconds | 3 minutes |
+| minutes | 90 minutes |
+| hours | 36 hours |
+| days | 14 days |
+| weeks | 60 days |
+| months | 24 months (2 years) |
+| years | open-ended |
 
 Months and years use the mean Gregorian calendar length (365.2425 days per
-year). The underlying `RelativeAge` conversion quantizes each magnitude to two
-decimal places, and the typed Dotos value preserves its unit.
+year). Each magnitude is deterministically quantized to two decimal places.
 
 ## Construction
 
-- `RelativeAge::from_duration(span)` — from a `std::time::Duration`.
-- `RelativeAge::from_nanoseconds(nanoseconds)` — from a raw elapsed nanosecond
-  count, the shape stored record ages arrive in.
-- `RelativeAge::elapsed_between(earlier, later)` — the span between two
-  instants on one clock, saturating to zero when `later` precedes `earlier`.
-- `RelativeAge::into_human_readable_time()` — the structured unit-and-magnitude
-  projection for Dotos output.
+- `RelativeAge::from_duration(span)` builds from a `std::time::Duration`.
+- `RelativeAge::from_nanoseconds(nanoseconds)` builds from a raw elapsed count.
+- `RelativeAge::elapsed_between(earlier, later)` saturates reversed instants to zero.
+- `RelativeAge::into_human_readable_time()` returns the typed projection.

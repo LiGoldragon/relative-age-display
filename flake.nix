@@ -25,7 +25,9 @@
         craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
         src = pkgs.lib.cleanSourceWith {
           src = ./.;
-          filter = craneLib.filterCargoSources;
+          filter = path: type:
+            craneLib.filterCargoSources path type
+            || pkgs.lib.hasSuffix ".ethos" path;
           name = "source";
         };
         cargoVendorDirectory = craneLib.vendorCargoDeps { inherit src; };

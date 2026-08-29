@@ -1,8 +1,8 @@
-//! Behavioral proof of the relative-age unit ladder and two-decimal rendering.
+//! Behavioral proof of the relative-age unit ladder and typed presentation.
 
-use std::time::Duration;
+use std::{fs, time::Duration};
 
-use dotos::{DotosEncode, DotosSource};
+use datomic::{Datomic, DecimalViewing, Text, TextEdge};
 use relative_age_display::{HumanReadableTime, RelativeAge};
 
 fn rendered_from_seconds(seconds: f64) -> String {
@@ -124,26 +124,19 @@ fn elapsed_between_measures_forward_spans() {
 }
 
 #[test]
-fn human_readable_time_encodes_whole_and_fractional_units_as_typed_dotos() {
+fn human_readable_time_round_trips_through_typed_text() {
     let minutes =
         RelativeAge::from_duration(Duration::from_secs(10 * 60)).into_human_readable_time();
     let days = RelativeAge::from_duration(Duration::from_secs_f64(3.2 * 86_400.0))
         .into_human_readable_time();
 
-    assert_eq!(minutes.to_dotos(), "Minutes.10");
-    assert_eq!(days.to_dotos(), "Days.(3.2)");
-    assert_eq!(
-        DotosSource::new("Minutes.10")
-            .parse::<HumanReadableTime>()
-            .expect("whole-unit typed Dotos decodes"),
-        minutes
-    );
-    assert_eq!(
-        DotosSource::new("Days.(3.2)")
-            .parse::<HumanReadableTime>()
-            .expect("fractional-unit typed Dotos decodes"),
-        days
-    );
+    assert_eq!(minutes.textualize().as_ref(), "Minutes.10.0");
+    assert_eq!(days.textualize().as_ref(), "Days.3.2");
+
+    let embodied = Text::<HumanReadableTime>::from("Days.3.2")
+        .embody()
+        .expect("typed text embodies a relative age");
+    assert!(matches!(embodied, HumanReadableTime::Days(magnitude) if magnitude.value() == 3.2));
 }
 
 #[test]
@@ -151,5 +144,28 @@ fn human_readable_time_preserves_two_decimal_quantization() {
     let days = RelativeAge::from_duration(Duration::from_secs_f64(3.428 * 86_400.0))
         .into_human_readable_time();
 
-    assert_eq!(days.to_dotos(), "Days.(3.43)");
+    assert_eq!(days.textualize().as_ref(), "Days.3.43");
+}
+
+#[test]
+fn committed_datomic_library_is_the_authored_ethos_projection() {
+    let source = fs::read_to_string("relative-age-display.ethos").expect("authored map");
+    let file = ethos_zero::FileReader::new(&EmptyManifest)
+        .read(&source)
+        .expect("map embodies");
+    let generated = ethos_zero::RustEmitter::datomic_library()
+        .emit(&file)
+        .expect("data-only Rust emission");
+    assert_eq!(
+        generated,
+        fs::read_to_string("src/generated.rs").expect("committed projection")
+    );
+}
+
+struct EmptyManifest;
+
+impl ethos_zero::Manifest for EmptyManifest {
+    fn resolve(&self, _: &str) -> Option<ethos_zero::FileLocation> {
+        None
+    }
 }
