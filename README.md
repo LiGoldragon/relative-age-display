@@ -1,12 +1,12 @@
 # relative-age-display
 
 `relative-age-display` projects an elapsed span onto its single most-significant
-unit. The projection is a closed, typed Datomic value: text enters through
-`Text<T>`, the value embodies through `TextEdge`, and outbound data becomes a
-Protos `Portion` before it is textualized.
+unit. The projection is a closed, typed Datom value. Text enters through
+`datom_codec::Potential<T>`, is bounded by an `IncorporationBudget`, and
+outbound data uses `Textualizable`.
 
 ```rust
-use datomic::{Datomic, Text, TextEdge};
+use datom_codec::{Actualizable, IncorporationBudget, Potential, Textualizable};
 use relative_age_display::{HumanReadableTime, RelativeAge};
 use std::time::Duration;
 
@@ -14,21 +14,22 @@ let minutes = RelativeAge::from_duration(Duration::from_secs(10 * 60))
     .into_human_readable_time();
 let text = minutes.textualize();
 
-assert_eq!(text.as_ref(), "Minutes.10.0");
+assert_eq!(text, "Minutes.10.0");
 assert!(matches!(
-    Text::<HumanReadableTime>::from("Days.3.2").embody(),
+    Potential::<HumanReadableTime>::from("Days.3.2")
+        .actualize(IncorporationBudget::try_from(1024).expect("budget")),
     Ok(HumanReadableTime::Days(_))
 ));
 ```
 
 `HumanReadableTime` has closed `Seconds`, `Minutes`, `Hours`, `Days`, `Weeks`,
-`Months`, and `Years` variants. Each payload is a finite decimal, so text and
-Portion projection remain total for every value produced by `RelativeAge`.
+`Months`, and `Years` variants. Each payload is a Protos decimal, so text and
+Datom projection remain total for every value produced by `RelativeAge`.
 The source-owned `relative-age-display.ethos` map owns those declarations;
-`src/generated.rs` is its byte-exact `RustEmitter::datomic_library()` output.
+`src/generated.rs` is its byte-exact current Ethos `Generate` output.
 
 `RelativeAge` implements `Display` for text-only views. Use
-`into_human_readable_time()` with the Datomic edge whenever the selected unit
+`into_human_readable_time()` with the Datom edge whenever the selected unit
 must remain data.
 
 ## The unit ladder

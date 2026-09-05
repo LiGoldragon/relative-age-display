@@ -1,13 +1,5 @@
-Schema.{0 1 0}
+Types
 []
-
-Types.[
-  HumanReadableMagnitude.Alias.{Visibility.Public Target.Decimal}
-  HumanReadableTime.Enum.[Visibility.Public Seconds.HumanReadableMagnitude Minutes.HumanReadableMagnitude Hours.HumanReadableMagnitude Days.HumanReadableMagnitude Weeks.HumanReadableMagnitude Months.HumanReadableMagnitude Years.HumanReadableMagnitude]
-]
-
-Kinds.[
-  Datomic.{embody.[Result<Self Fault>] portion.[Portion] textualize.[Text<Self>]}
-]
-
-Associations.[]
+[ HumanReadableMagnitude.Decimal
+  HumanReadableTime.[ Seconds.HumanReadableMagnitude Minutes.HumanReadableMagnitude Hours.HumanReadableMagnitude Days.HumanReadableMagnitude Weeks.HumanReadableMagnitude Months.HumanReadableMagnitude Years.HumanReadableMagnitude ] ]
+[]

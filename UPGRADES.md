@@ -1,14 +1,13 @@
 # Upgrades
 
-## 0.4.0 — typed Datomic presentation
+## 0.5.0 — current typed Datom codec
 
-This is a breaking replacement of the encoded presentation contract. Consumers
-must depend on `datomic` and use `Datomic`, `Text<T>`, and `TextEdge` for the
-typed edge. `HumanReadableTime` now textualizes as canonical finite-decimal
-payloads such as `Minutes.10.0` and `Days.3.2`; the prior representation and
-its codec traits are unavailable.
+This breaking codec migration replaces the retired `datomic` crate with
+`datom-codec`. Consumers must use `Potential<T>`,
+`Actualizable::actualize(IncorporationBudget)`, and `Textualizable` at the
+typed text boundary. `HumanReadableTime` retains canonical finite-decimal
+texts such as `Minutes.10.0` and `Days.3.2`.
 
 The declaration source is `relative-age-display.ethos`; its committed
-`src/generated.rs` projection is regenerated with
-`RustEmitter::datomic_library()`. The package now requires Rust 1.89 for its
-generator witness.
+`src/generated.rs` projection is regenerated with current Ethos `Generate`.
+The package requires Rust 1.89 for its generator witness.

@@ -2,7 +2,7 @@
 
 use std::{fmt, time::Duration};
 
-use datomic::{DecimalViewing, FiniteDecimal};
+use protos::Decimal;
 
 #[rustfmt::skip]
 #[allow(clippy::possible_missing_else)]
@@ -72,17 +72,16 @@ impl fmt::Display for HumanReadableTime {
             Self::Months(magnitude) => (magnitude, "months"),
             Self::Years(magnitude) => (magnitude, "years"),
         };
-        write!(formatter, "{:.2} {unit}", magnitude.value())
+        write!(formatter, "{:.2} {unit}", f64::from(*magnitude))
     }
 }
 
-fn quantized_magnitude(value: f64) -> FiniteDecimal {
+fn quantized_magnitude(value: f64) -> Decimal {
     let rendered = format!("{value:.2}");
     let quantized: f64 = rendered
         .parse()
         .expect("fixed two-decimal rendering always parses as f64");
-    FiniteDecimal::try_from(quantized)
-        .expect("a finite Duration produces a finite two-decimal magnitude")
+    Decimal::try_from(quantized).expect("a finite Duration produces a finite two-decimal magnitude")
 }
 
 #[derive(Clone, Copy)]

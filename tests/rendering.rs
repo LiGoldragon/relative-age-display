@@ -2,7 +2,9 @@
 
 use std::{fs, time::Duration};
 
-use datomic::{Datomic, DecimalViewing, Text, TextEdge};
+use datom_codec::{Actualizable, IncorporationBudget, Potential, Textualizable};
+use ethos_zero::Generating;
+use protos::Potential as ProtosPotential;
 use relative_age_display::{HumanReadableTime, RelativeAge};
 
 fn rendered_from_seconds(seconds: f64) -> String {
@@ -130,13 +132,13 @@ fn human_readable_time_round_trips_through_typed_text() {
     let days = RelativeAge::from_duration(Duration::from_secs_f64(3.2 * 86_400.0))
         .into_human_readable_time();
 
-    assert_eq!(minutes.textualize().as_ref(), "Minutes.10.0");
-    assert_eq!(days.textualize().as_ref(), "Days.3.2");
+    assert_eq!(minutes.textualize(), "Minutes.10.0");
+    assert_eq!(days.textualize(), "Days.3.2");
 
-    let embodied = Text::<HumanReadableTime>::from("Days.3.2")
-        .embody()
-        .expect("typed text embodies a relative age");
-    assert!(matches!(embodied, HumanReadableTime::Days(magnitude) if magnitude.value() == 3.2));
+    let embodied = Potential::<HumanReadableTime>::from("Days.3.2")
+        .actualize(IncorporationBudget::try_from(1024).expect("positive budget"))
+        .expect("typed text incorporates a relative age");
+    assert!(matches!(embodied, HumanReadableTime::Days(magnitude) if f64::from(magnitude) == 3.2));
 }
 
 #[test]
@@ -144,28 +146,18 @@ fn human_readable_time_preserves_two_decimal_quantization() {
     let days = RelativeAge::from_duration(Duration::from_secs_f64(3.428 * 86_400.0))
         .into_human_readable_time();
 
-    assert_eq!(days.textualize().as_ref(), "Days.3.43");
+    assert_eq!(days.textualize(), "Days.3.43");
 }
 
 #[test]
 fn committed_datomic_library_is_the_authored_ethos_projection() {
     let source = fs::read_to_string("relative-age-display.ethos").expect("authored map");
-    let file = ethos_zero::FileReader::new(&EmptyManifest)
-        .read(&source)
-        .expect("map embodies");
-    let generated = ethos_zero::RustEmitter::datomic_library()
-        .emit(&file)
-        .expect("data-only Rust emission");
+    let file = ProtosPotential::<ethos_zero::File>::from(source.as_str())
+        .actualize(())
+        .expect("map incorporates");
+    let generated = file.generate().expect("data-only Rust generation");
     assert_eq!(
         generated,
         fs::read_to_string("src/generated.rs").expect("committed projection")
     );
-}
-
-struct EmptyManifest;
-
-impl ethos_zero::Manifest for EmptyManifest {
-    fn resolve(&self, _: &str) -> Option<ethos_zero::FileLocation> {
-        None
-    }
 }
