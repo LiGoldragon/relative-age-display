@@ -13,7 +13,7 @@ name = "relative_age_display"
 path = "src/lib.rs"
 
 [features]
-default = []
+default = ["datom"]
 datom = ["dep:protos"]
 
 [dependencies]

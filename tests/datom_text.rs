@@ -55,7 +55,8 @@ fn the_ladder_renders_and_writes_the_texts_of_0_5_0() {
 
 /// Text in, as 0.5.0 admitted or refused it; `None` is a refusal. `Days.-0.0` is the one
 /// difference: 0.5.0 kept the sign of negative zero (`Days.-0.0`), the current codec writes
-/// `Days.0.0`; the value is equal either way.
+/// `Days.0.0`. In 0.5.0 the two zeros were distinct values (equality compared bits); the current
+/// `Decimal` has no negative zero, so that distinction no longer exists: a text change, reviewed as one.
 #[test]
 fn the_admission_of_text_matches_0_5_0() {
     let expected: &[(&str, Option<&str>)] = &[

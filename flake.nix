@@ -41,13 +41,14 @@
         packages.default = craneLib.buildPackage (commonArguments // { inherit cargoArtifacts; });
         checks = {
           build = craneLib.cargoBuild (commonArguments // { inherit cargoArtifacts; });
-          # Default features: the rendering ladder, the archive tests and the real-generation
-          # equality test (the committed projection is compared, never overwritten).
+          # Default features (default = datom): the rendering ladder, the datom text tests, the archive
+          # tests and the real-generation equality test (the committed projection is compared, never
+          # overwritten).
           test = craneLib.cargoTest (commonArguments // { inherit cargoArtifacts; });
-          # The datom feature adds protos, the Datomizable and Composing derives and the text tests.
-          test-datom = craneLib.cargoTest (commonArguments // {
+          # No default features: the datom derives, protos and the text tests are absent.
+          test-no-default = craneLib.cargoTest (commonArguments // {
             inherit cargoArtifacts;
-            cargoTestExtraArgs = "--features datom";
+            cargoTestExtraArgs = "--no-default-features";
           });
           doc = craneLib.cargoDoc (commonArguments // {
             inherit cargoArtifacts;

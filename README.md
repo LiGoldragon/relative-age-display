@@ -23,7 +23,7 @@ assert!(matches!(
 ```
 
 `HumanReadableTime` has closed `Seconds`, `Minutes`, `Hours`, `Days`, `Weeks`,
-`Months`, and `Years` variants. Each payload is a Protos decimal, so text and
+`Months`, and `Years` variants. Each payload is a `datom_codec::Decimal`, so text and
 Datom projection remain total for every value produced by `RelativeAge`.
 The source-owned `ethos/relative_age_display.ethos` map owns those declarations;
 `src/generated/relative_age_display.rs` is its byte-exact current Ethos `Generate` output,
