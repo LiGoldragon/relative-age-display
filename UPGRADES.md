@@ -9,7 +9,7 @@ What breaks:
   `datom_codec::Decimating::float`. The generated module moved to `src/generated/relative_age_display.rs`
   and the authored map to `ethos/relative_age_display.ethos` (written in current Ethos syntax: the header is
   `Library`).
-- Built on datom-codec `eabead4`, protos `3c7ade3` and generator ethos-zero `5a5daca`. The old `Datomic`,
+- Built on datom-codec `5cd6219` (0.33.1), protos `3c7ade3` and generator ethos-zero `5a5daca`. The old `Datomic`,
   `Potential`/`IncorporationBudget` and `Textualizable`-on-codec API is replaced: text goes through
   `Datomizable`, `protos::Protosizable` and `Textualizable`, and admission through
   `datom_codec::Potential` with a `Budget`. The types derive `Datomizable` and `Composing` only under the
@@ -33,15 +33,16 @@ an equality-preserving rewrite. No `RelativeAge` produced from a `Duration` is n
 produces it; only a hand-built or archived magnitude can.
 
 Archive: the types now archive with rkyv because the generator emits those derives unconditionally. There was
-no archive in 0.5.0, so nothing historic is read. Known gap, not closed here: the archived `Decimal` is checked
-for its bit pattern only, so `rkyv::from_bytes` admits a non-finite float that `Decimal::try_from` and the text
-reader refuse. `tests/rendering.rs` records that admission; it is not a safety property. The fix belongs to the
-codec's `Decimal`, and this release adds no wrapper.
+no archive in 0.5.0, so nothing historic is read. Reading an archive into a native `HumanReadableTime` goes
+through datom-codec 0.33.1's checked `Decimal` reconstruction: a non-finite magnitude is refused in every unit
+and a negative zero reads as zero (`tests/rendering.rs`, archives built from layout mirrors). The borrowed
+archived form is still only structurally validated. This release therefore needs datom-codec 0.33.1 or later:
+0.33.0 admits a non-finite float from an archive.
 
 Known declared consumers: none found in any Cargo.toml under /git/github.com/LiGoldragon or /home/li/primary
 (see the packet; that covers declared dependencies only).
 
-Deploy: repin to this release with datom-codec `eabead4` and protos `3c7ade3`, wrap or unwrap the magnitude as above.
+Deploy: repin to this release with datom-codec `5cd6219` and protos `3c7ade3`, wrap or unwrap the magnitude as above.
 
 ## 0.5.0 — current typed Datom codec
 

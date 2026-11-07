@@ -149,27 +149,71 @@ fn a_human_readable_time_returns_from_its_archive_equal() {
     }
 }
 
-/// The archive is new in 0.6.0; there is no earlier archive to read. A layout mirror with a
-/// raw float shows what admission does with a non-finite value: the derived rkyv Deserialize
-/// of `Decimal` does not re-check finiteness, so `from_bytes` admits it. Recorded, not fixed.
+/// Layout mirrors that archive a bare float in the position of the magnitude, one per unit: the
+/// bytes a peer could hand over. The archive of the real type is the same layout.
 #[derive(rkyv::Archive, rkyv::Serialize)]
 enum MirrorTime {
     Seconds(MirrorMagnitude),
+    Minutes(MirrorMagnitude),
+    Hours(MirrorMagnitude),
+    Days(MirrorMagnitude),
+    Weeks(MirrorMagnitude),
+    Months(MirrorMagnitude),
+    Years(MirrorMagnitude),
 }
 #[derive(rkyv::Archive, rkyv::Serialize)]
 struct MirrorMagnitude(MirrorDecimal);
 #[derive(rkyv::Archive, rkyv::Serialize)]
 struct MirrorDecimal(f64);
 
+fn mirrors(value: f64) -> Vec<MirrorTime> {
+    let magnitude = || MirrorMagnitude(MirrorDecimal(value));
+    vec![
+        MirrorTime::Seconds(magnitude()),
+        MirrorTime::Minutes(magnitude()),
+        MirrorTime::Hours(magnitude()),
+        MirrorTime::Days(magnitude()),
+        MirrorTime::Weeks(magnitude()),
+        MirrorTime::Months(magnitude()),
+        MirrorTime::Years(magnitude()),
+    ]
+}
+
+/// Reading an archive into a native value goes through the codec's `Decimal::try_from` (datom-codec
+/// 0.33.1), nested in the magnitude and the time: a non-finite float is refused in every unit.
 #[test]
-fn archive_admission_does_not_recheck_finiteness_today() {
-    let bytes = rkyv::to_bytes::<rkyv::rancor::Error>(&MirrorTime::Seconds(MirrorMagnitude(
-        MirrorDecimal(f64::NAN),
-    )))
-    .expect("archives the mirror");
-    let admitted = rkyv::from_bytes::<HumanReadableTime, rkyv::rancor::Error>(&bytes);
-    assert!(
-        admitted.is_ok(),
-        "if this fails, archive admission now checks finiteness: update the UPGRADES note"
+fn a_non_finite_magnitude_in_an_archive_is_refused_in_every_unit() {
+    for value in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+        for mirror in mirrors(value) {
+            let bytes = rkyv::to_bytes::<rkyv::rancor::Error>(&mirror).expect("archives");
+            assert!(
+                rkyv::from_bytes::<HumanReadableTime, rkyv::rancor::Error>(&bytes).is_err(),
+                "{value}"
+            );
+        }
+    }
+}
+
+#[test]
+fn a_finite_archive_keeps_the_layout_of_the_mirror_and_a_negative_zero_reads_as_zero() {
+    let time = RelativeAge::from_duration(Duration::from_secs_f64(3.2 * 86_400.0))
+        .into_human_readable_time();
+    let real = rkyv::to_bytes::<rkyv::rancor::Error>(&time).expect("archives");
+    let mirror = rkyv::to_bytes::<rkyv::rancor::Error>(&mirrors(3.2).remove(3)).expect("archives");
+    assert_eq!(real.as_slice(), mirror.as_slice());
+
+    let negative =
+        rkyv::to_bytes::<rkyv::rancor::Error>(&mirrors(-0.0).remove(0)).expect("archives");
+    let zero = RelativeAge::from_duration(Duration::ZERO).into_human_readable_time();
+    let back = rkyv::from_bytes::<HumanReadableTime, rkyv::rancor::Error>(&negative)
+        .expect("a negative zero restores as zero");
+    assert_eq!(back, zero);
+    // equality treats the two zeros alike; the bits show which one was read
+    let HumanReadableTime::Seconds(magnitude) = back else {
+        panic!("the unit is kept");
+    };
+    assert_eq!(
+        datom_codec::Decimating::float(&magnitude.0).to_bits(),
+        0.0f64.to_bits()
     );
 }
