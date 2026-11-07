@@ -9,7 +9,7 @@ What breaks:
   `datom_codec::Decimating::float`. The generated module moved to `src/generated/relative_age_display.rs`
   and the authored map to `ethos/relative_age_display.ethos` (written in current Ethos syntax: the header is
   `Library`).
-- Built on datom-codec `5cd6219` (0.33.1), protos `3c7ade3` and generator ethos-zero `5a5daca`. The old `Datomic`,
+- Built on datom-codec `5cd6219` (0.33.1), protos `3c7ade3` and generator ethos-zero `c4e6da1` (19.2.1). The old `Datomic`,
   `Potential`/`IncorporationBudget` and `Textualizable`-on-codec API is replaced: text goes through
   `Datomizable`, `protos::Protosizable` and `Textualizable`, and admission through
   `datom_codec::Potential` with a `Budget`. The types derive `Datomizable` and `Composing` only under the
