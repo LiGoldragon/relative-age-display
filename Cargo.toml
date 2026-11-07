@@ -1,6 +1,6 @@
 [package]
 name         = "relative-age-display"
-version      = "0.5.0"
+version      = "0.6.0"
 edition      = "2024"
 rust-version = "1.89"
 license      = "MIT OR Apache-2.0"
@@ -12,12 +12,26 @@ publish      = false
 name = "relative_age_display"
 path = "src/lib.rs"
 
+[features]
+default = []
+datom = ["dep:protos"]
+
 [dependencies]
-datom-codec = { git = "https://github.com/LiGoldragon/datom-codec", rev = "41a3c073d5c5" }
-protos = { git = "https://github.com/LiGoldragon/protos", rev = "2d999f173334" }
+datom-codec = { git = "https://github.com/LiGoldragon/datom-codec", rev = "eabead4", features = ["rkyv"] }
+protos = { git = "https://github.com/LiGoldragon/protos", rev = "3c7ade3", features = ["rkyv"], optional = true }
+rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 
 [dev-dependencies]
-ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "bcf728bbe4521e663f4773d3c1fd4ebb643df32e" }
+ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "5a5daca" }
+
+[[test]]
+name = "rendering"
+path = "tests/rendering.rs"
+
+[[test]]
+name = "datom_text"
+path = "tests/datom_text.rs"
+required-features = ["datom"]
 
 [lints.rust]
 unsafe_code = "forbid"

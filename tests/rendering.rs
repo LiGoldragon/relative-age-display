@@ -2,9 +2,7 @@
 
 use std::{fs, time::Duration};
 
-use datom_codec::{Actualizable, IncorporationBudget, Potential, Textualizable};
-use ethos_zero::Generating;
-use protos::Potential as ProtosPotential;
+use ethos_zero::{Actualizing, File, Generating, Potential};
 use relative_age_display::{HumanReadableTime, RelativeAge};
 
 fn rendered_from_seconds(seconds: f64) -> String {
@@ -126,38 +124,52 @@ fn elapsed_between_measures_forward_spans() {
 }
 
 #[test]
-fn human_readable_time_round_trips_through_typed_text() {
-    let minutes =
-        RelativeAge::from_duration(Duration::from_secs(10 * 60)).into_human_readable_time();
-    let days = RelativeAge::from_duration(Duration::from_secs_f64(3.2 * 86_400.0))
-        .into_human_readable_time();
-
-    assert_eq!(minutes.textualize(), "Minutes.10.0");
-    assert_eq!(days.textualize(), "Days.3.2");
-
-    let embodied = Potential::<HumanReadableTime>::from("Days.3.2")
-        .actualize(IncorporationBudget::try_from(1024).expect("positive budget"))
-        .expect("typed text incorporates a relative age");
-    assert!(matches!(embodied, HumanReadableTime::Days(magnitude) if f64::from(magnitude) == 3.2));
-}
-
-#[test]
-fn human_readable_time_preserves_two_decimal_quantization() {
-    let days = RelativeAge::from_duration(Duration::from_secs_f64(3.428 * 86_400.0))
-        .into_human_readable_time();
-
-    assert_eq!(days.textualize(), "Days.3.43");
-}
-
-#[test]
-fn committed_datomic_library_is_the_authored_ethos_projection() {
-    let source = fs::read_to_string("relative-age-display.ethos").expect("authored map");
-    let file = ProtosPotential::<ethos_zero::File>::from(source.as_str())
-        .actualize(())
+fn committed_projection_is_the_real_generation_of_the_authored_ethos() {
+    // Compared, never overwritten: a stale committed file fails here.
+    let source = fs::read_to_string("ethos/relative_age_display.ethos").expect("authored map");
+    let file = Potential::<File>::from(source)
+        .actualize()
         .expect("map incorporates");
-    let generated = file.generate().expect("data-only Rust generation");
+    let generated = file.generate().expect("Rust generation");
     assert_eq!(
         generated,
-        fs::read_to_string("src/generated.rs").expect("committed projection")
+        fs::read_to_string("src/generated/relative_age_display.rs").expect("committed projection")
+    );
+}
+
+#[test]
+fn a_human_readable_time_returns_from_its_archive_equal() {
+    for seconds in [0.0, 42.17, 3.2 * 86_400.0, 400.0 * 86_400.0] {
+        let time =
+            RelativeAge::from_duration(Duration::from_secs_f64(seconds)).into_human_readable_time();
+        let bytes = rkyv::to_bytes::<rkyv::rancor::Error>(&time).expect("archives");
+        let back =
+            rkyv::from_bytes::<HumanReadableTime, rkyv::rancor::Error>(&bytes).expect("restores");
+        assert_eq!(back, time);
+    }
+}
+
+/// The archive is new in 0.6.0; there is no earlier archive to read. A layout mirror with a
+/// raw float shows what admission does with a non-finite value: the derived rkyv Deserialize
+/// of `Decimal` does not re-check finiteness, so `from_bytes` admits it. Recorded, not fixed.
+#[derive(rkyv::Archive, rkyv::Serialize)]
+enum MirrorTime {
+    Seconds(MirrorMagnitude),
+}
+#[derive(rkyv::Archive, rkyv::Serialize)]
+struct MirrorMagnitude(MirrorDecimal);
+#[derive(rkyv::Archive, rkyv::Serialize)]
+struct MirrorDecimal(f64);
+
+#[test]
+fn archive_admission_does_not_recheck_finiteness_today() {
+    let bytes = rkyv::to_bytes::<rkyv::rancor::Error>(&MirrorTime::Seconds(MirrorMagnitude(
+        MirrorDecimal(f64::NAN),
+    )))
+    .expect("archives the mirror");
+    let admitted = rkyv::from_bytes::<HumanReadableTime, rkyv::rancor::Error>(&bytes);
+    assert!(
+        admitted.is_ok(),
+        "if this fails, archive admission now checks finiteness: update the UPGRADES note"
     );
 }

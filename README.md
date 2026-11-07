@@ -25,8 +25,9 @@ assert!(matches!(
 `HumanReadableTime` has closed `Seconds`, `Minutes`, `Hours`, `Days`, `Weeks`,
 `Months`, and `Years` variants. Each payload is a Protos decimal, so text and
 Datom projection remain total for every value produced by `RelativeAge`.
-The source-owned `relative-age-display.ethos` map owns those declarations;
-`src/generated.rs` is its byte-exact current Ethos `Generate` output.
+The source-owned `ethos/relative_age_display.ethos` map owns those declarations;
+`src/generated/relative_age_display.rs` is its byte-exact current Ethos `Generate` output,
+compared (never overwritten) by a test.
 
 `RelativeAge` implements `Display` for text-only views. Use
 `into_human_readable_time()` with the Datom edge whenever the selected unit

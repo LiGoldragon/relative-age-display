@@ -1,5 +1,6 @@
-Types
+Library
 []
 [ HumanReadableMagnitude.Decimal
   HumanReadableTime.[ Seconds.HumanReadableMagnitude Minutes.HumanReadableMagnitude Hours.HumanReadableMagnitude Days.HumanReadableMagnitude Weeks.HumanReadableMagnitude Months.HumanReadableMagnitude Years.HumanReadableMagnitude ] ]
+[]
 []

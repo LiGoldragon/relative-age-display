@@ -41,7 +41,14 @@
         packages.default = craneLib.buildPackage (commonArguments // { inherit cargoArtifacts; });
         checks = {
           build = craneLib.cargoBuild (commonArguments // { inherit cargoArtifacts; });
+          # Default features: the rendering ladder, the archive tests and the real-generation
+          # equality test (the committed projection is compared, never overwritten).
           test = craneLib.cargoTest (commonArguments // { inherit cargoArtifacts; });
+          # The datom feature adds protos, the Datomizable and Composing derives and the text tests.
+          test-datom = craneLib.cargoTest (commonArguments // {
+            inherit cargoArtifacts;
+            cargoTestExtraArgs = "--features datom";
+          });
           doc = craneLib.cargoDoc (commonArguments // {
             inherit cargoArtifacts;
             RUSTDOCFLAGS = "-D warnings";
@@ -49,7 +56,7 @@
           fmt = craneLib.cargoFmt { inherit src; };
           clippy = craneLib.cargoClippy (commonArguments // {
             inherit cargoArtifacts;
-            cargoClippyExtraArgs = "--all-targets -- -D warnings";
+            cargoClippyExtraArgs = "--all-targets --all-features -- -D warnings";
           });
         };
         devShells.default = pkgs.mkShell {

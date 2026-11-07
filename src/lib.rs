@@ -2,13 +2,12 @@
 
 use std::{fmt, time::Duration};
 
-use protos::Decimal;
+use datom_codec::{Decimal, Decimating};
 
 #[rustfmt::skip]
-#[allow(clippy::possible_missing_else)]
-mod generated;
+pub mod generated;
 
-pub use generated::{HumanReadableMagnitude, HumanReadableTime};
+pub use generated::relative_age_display::{HumanReadableMagnitude, HumanReadableTime};
 
 /// An elapsed time span that projects its most-significant unit for a human reader.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -72,16 +71,19 @@ impl fmt::Display for HumanReadableTime {
             Self::Months(magnitude) => (magnitude, "months"),
             Self::Years(magnitude) => (magnitude, "years"),
         };
-        write!(formatter, "{:.2} {unit}", f64::from(*magnitude))
+        write!(formatter, "{:.2} {unit}", magnitude.0.float())
     }
 }
 
-fn quantized_magnitude(value: f64) -> Decimal {
+fn quantized_magnitude(value: f64) -> HumanReadableMagnitude {
     let rendered = format!("{value:.2}");
     let quantized: f64 = rendered
         .parse()
         .expect("fixed two-decimal rendering always parses as f64");
-    Decimal::try_from(quantized).expect("a finite Duration produces a finite two-decimal magnitude")
+    HumanReadableMagnitude(
+        Decimal::try_from(quantized)
+            .expect("a finite Duration produces a finite two-decimal magnitude"),
+    )
 }
 
 #[derive(Clone, Copy)]
